@@ -364,24 +364,103 @@ export default function Game() {
     return { isMainLane, isActiveLane };
   };
 
-  if (!hasEnteredName) {
+if (!hasEnteredName) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', color: '#fff', backgroundColor: '#0f172a', height: '100vh', boxSizing: 'border-box', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <h1 style={{ color: '#38bdf8', fontSize: '2.2rem', marginBottom: '10px' }}>CROSSBLOCK (TETRACORE)</h1>
-        <p style={{ color: '#94a3b8', fontSize: '1rem', marginBottom: '25px' }}>Ingresá tus iniciales para el Ranking Arcade</p>
+      <div
+        style={{
+          padding: '20px',
+          textAlign: 'center',
+          color: '#fff',
+          minHeight: 'calc(100vh - 110px)',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <h1
+          style={{
+            fontFamily: "'Orbitron', monospace",
+            color: '#00f3ff',
+            fontSize: '2.4rem',
+            letterSpacing: '5px',
+            marginBottom: '8px',
+            textShadow: '0 0 16px rgba(0, 243, 255, 0.7)',
+          }}
+        >
+          TETRACORE
+        </h1>
+        <p
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            color: '#94a3b8',
+            fontSize: '1.05rem',
+            letterSpacing: '1px',
+            marginBottom: '24px',
+          }}
+        >
+          IDENTIFICACIÓN DE PILOTO PARA EL RANKING ARCADE
+        </p>
 
-        <form onSubmit={handleNameSubmit} style={{ background: '#1e293b', padding: '25px', borderRadius: '12px', border: '2px solid #3b82f6', display: 'flex', flexDirection: 'column', gap: '15px', width: '280px' }}>
-          <label style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#f8fafc' }}>TU NOMBRE / INICIALES (3 LETRAS):</label>
+        <form
+          onSubmit={handleNameSubmit}
+          style={{
+            background: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            padding: '28px 24px',
+            borderRadius: '16px',
+            border: '1px solid rgba(0, 243, 255, 0.4)',
+            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.65), inset 0 0 14px rgba(0, 243, 255, 0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            width: '300px',
+          }}
+        >
+          <label
+            style={{
+              fontFamily: "'Orbitron', monospace",
+              fontWeight: '700',
+              fontSize: '0.75rem',
+              letterSpacing: '1.5px',
+              color: '#cbd5e1',
+            }}
+          >
+            INICIALES (3 LETRAS)
+          </label>
           <input
             type="text"
             maxLength={3}
             value={playerInitials}
             onChange={(e) => setPlayerInitials(e.target.value.toUpperCase())}
-            style={{ fontSize: '1.8rem', textAlign: 'center', fontWeight: 'bold', letterSpacing: '6px', padding: '8px', borderRadius: '6px', border: '2px solid #2563eb', background: '#020617', color: '#38bdf8' }}
+            style={{
+              fontFamily: "'Orbitron', monospace",
+              fontSize: '2rem',
+              textAlign: 'center',
+              fontWeight: '900',
+              letterSpacing: '8px',
+              padding: '10px',
+              borderRadius: '10px',
+              border: '1px solid rgba(0, 243, 255, 0.65)',
+              background: 'rgba(8, 8, 17, 0.85)',
+              color: '#00f3ff',
+              boxShadow: 'inset 0 0 10px rgba(0, 243, 255, 0.2)',
+              outline: 'none',
+            }}
             required
           />
-          <button type="submit" style={{ padding: '10px', fontSize: '1rem', fontWeight: 'bold', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-            ¡EMPEZAR A JUGAR!
+          <button
+            type="submit"
+            style={{
+              ...btnCannonStyle,
+              padding: '12px',
+              fontSize: '0.9rem',
+              marginTop: '4px',
+            }}
+          >
+            INICIAR MISIÓN ▶
           </button>
         </form>
       </div>
@@ -389,135 +468,362 @@ export default function Game() {
   }
 
   return (
-    <div style={{ padding: '10px', textAlign: 'center', color: '#fff', backgroundColor: '#0f172a', height: '100vh', maxHeight: '100vh', overflow: 'hidden', boxSizing: 'border-box', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center' }}>
-      
-      <h2 style={{ margin: '2px 0 4px 0', color: '#38bdf8', fontSize: '1.3rem' }}>CrossBlock (TetraCore) — Arena 7x7</h2>
+    <div
+      style={{
+        padding: '6px 12px',
+        textAlign: 'center',
+        color: '#fff',
+        minHeight: 'calc(100vh - 110px)',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}
+    >
+      {/* Título y HUD Superior Estilo Cyberpunk */}
+      <div>
+        <h2
+          style={{
+            margin: '2px 0',
+            fontFamily: "'Orbitron', monospace",
+            color: '#00f3ff',
+            fontSize: '1.25rem',
+            letterSpacing: '2px',
+            textShadow: '0 0 10px rgba(0, 243, 255, 0.6)',
+          }}
+        >
+          TETRACORE <span style={{ color: '#ff0055', fontSize: '0.9rem' }}>// ARENA 7x7</span>
+        </h2>
 
-      <div style={{ margin: '2px 0', fontSize: '0.95rem', display: 'flex', justifyContent: 'center', gap: '18px', alignItems: 'center' }}>
-        <span>Jugador: <b style={{ color: '#38bdf8' }}>{playerInitials}</b></span> | 
-        <span>Puntos: <b style={{ color: '#10b981' }}>{score}</b></span> | 
-        <span>Nivel: <b style={{ color: '#f59e0b' }}>{level}</b></span> | 
-        <span>Meta: <b style={{ color: '#ec4899' }}>{combosInLevel} / {targetCombos} tríos</b></span>
+        <div
+          style={{
+            margin: '4px 0 6px 0',
+            fontFamily: "'Rajdhani', sans-serif",
+            fontSize: '1rem',
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '16px',
+            alignItems: 'center',
+            background: 'rgba(15, 23, 42, 0.55)',
+            padding: '4px 16px',
+            borderRadius: '20px',
+            border: '1px solid rgba(0, 243, 255, 0.25)',
+          }}
+        >
+          <span>PILOTO: <b style={{ color: '#00f3ff', fontFamily: "'Orbitron', monospace" }}>{playerInitials}</b></span>
+          <span>|</span>
+          <span>SCORE: <b style={{ color: '#00ff66', fontFamily: "'Orbitron', monospace" }}>{score}</b></span>
+          <span>|</span>
+          <span>NIVEL: <b style={{ color: '#fbbf24', fontFamily: "'Orbitron', monospace" }}>{level}</b></span>
+          <span>|</span>
+          <span>OBJETIVO: <b style={{ color: '#ec4899', fontFamily: "'Orbitron', monospace" }}>{combosInLevel}/{targetCombos} TRÍOS</b></span>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', alignItems: 'center', flex: 1, maxHeight: 'calc(100vh - 120px)' }}>
-
-        {/* Panel lateral: Próxima Pieza y Disparo */}
-        <div style={{ background: '#1e293b', padding: '12px', borderRadius: '8px', border: '1px solid #3b82f6', width: '120px' }}>
-          <p style={{ margin: '0 0 6px 0', fontSize: '0.8rem' }}>Próxima Pieza</p>
-          <div style={{ width: '32px', height: '32px', backgroundColor: nextColor, margin: '0 auto', borderRadius: '4px', boxShadow: '0 0 8px rgba(255,255,255,0.4)' }} />
-          <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '10px', marginBottom: '4px' }}>Disparo Manual:</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
-            <button onClick={() => spawnPiece('TOP')} style={btnCannonStyle}>TOP</button>
-            <button onClick={() => spawnPiece('BOTTOM')} style={btnCannonStyle}>BOT</button>
-            <button onClick={() => spawnPiece('LEFT')} style={btnCannonStyle}>IZQ</button>
-            <button onClick={() => spawnPiece('RIGHT')} style={btnCannonStyle}>DER</button>
-          </div>
-        </div>
-
-        {/* Tablero 7x7 */}
-        <div style={{ position: 'relative', padding: '24px', backgroundColor: '#1e293b', borderRadius: '10px', border: '2px solid #334155' }}>
+      {/* Área Central: Tablero + Cañones a la izquierda | Ranking TOP 5 a la derecha */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', alignItems: 'center', position: 'relative' }}>
+        
+        {/* Arena de Juego con los 4 Cañones Retro Simétricos */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', position: 'relative' }}>
           
-          <div onClick={() => spawnPiece('TOP')} style={{ position: 'absolute', top: '3px', left: '50%', transform: 'translateX(-50%)', width: '38px', height: '18px', backgroundColor: '#2563eb', color: '#fff', fontSize: '0.6rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '3px', cursor: 'pointer' }}>▲ TOP</div>
-          <div onClick={() => spawnPiece('BOTTOM')} style={{ position: 'absolute', bottom: '3px', left: '50%', transform: 'translateX(-50%)', width: '38px', height: '18px', backgroundColor: '#2563eb', color: '#fff', fontSize: '0.6rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '3px', cursor: 'pointer' }}>▼ BOT</div>
-          <div onClick={() => spawnPiece('LEFT')} style={{ position: 'absolute', left: '3px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '38px', backgroundColor: '#2563eb', color: '#fff', fontSize: '0.6rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '3px', cursor: 'pointer', writingMode: 'vertical-lr' }}>◄ IZQ</div>
-          <div onClick={() => spawnPiece('RIGHT')} style={{ position: 'absolute', right: '3px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '38px', backgroundColor: '#2563eb', color: '#fff', fontSize: '0.6rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '3px', cursor: 'pointer', writingMode: 'vertical-lr' }}>► DER</div>
+          {/* Cañón Superior */}
+          <button
+            onClick={() => !activePiece && spawnPiece('TOP')}
+            disabled={!!activePiece || isPaused || isGameOver || isLevelCleared}
+            title="Disparar desde arriba"
+            style={{
+              ...btnCannonStyle,
+              width: '68px',
+              height: '32px',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '12px 12px 4px 4px',
+              borderBottom: '2px solid #00f3ff',
+              fontSize: '0.95rem',
+              opacity: activePiece ? 0.4 : 1,
+            }}
+          >
+            ▲
+          </button>
 
-          <div style={{ width: '350px', height: '350px', backgroundColor: '#020617', border: '2px solid #1d4ed8', borderRadius: '6px', padding: '3px', boxSizing: 'border-box' }}>
-            
-            {/* Modal de Nivel Superado */}
-            {isLevelCleared ? (
-              <div style={{ width: '100%', height: '100%', backgroundColor: 'rgba(16, 185, 129, 0.95)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderRadius: '4px' }}>
-                <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#ffffff' }}>⭐ ¡NIVEL {level} SUPERADO! ⭐</h2>
-                <p style={{ margin: '6px 0', fontSize: '0.9rem', color: '#ffffff' }}>Bonificación: <b>+{500 * level} PTS</b></p>
-                <p style={{ margin: '2px 0 10px 0', fontSize: '0.8rem', color: '#dcfce7' }}>
-                  El Nivel {level + 1} exigirá <b>{1 + (level + 1) * 2} tríos</b> y mayor velocidad
-                </p>
-                <button onClick={handleNextLevel} style={{ padding: '8px 16px', backgroundColor: '#0f172a', color: '#38bdf8', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
-                  ▶ Comenzar Nivel {level + 1}
-                </button>
-              </div>
-            ) : isGameOver ? (
-              <div style={{ width: '100%', height: '100%', backgroundColor: 'rgba(220, 38, 38, 0.95)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderRadius: '4px' }}>
-                <h2 style={{ margin: 0, fontSize: '1.8rem' }}>¡GAME OVER!</h2>
-                <p style={{ margin: '5px 0' }}>El núcleo se ha colapsado</p>
-                <button onClick={handleReset} style={{ padding: '6px 14px', backgroundColor: '#fff', color: '#dc2626', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', marginTop: '8px' }}>
-                  Reintentar
-                </button>
-              </div>
-            ) : isPaused ? (
-              <div style={{ width: '100%', height: '100%', backgroundColor: 'rgba(37, 99, 235, 0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: '4px' }}>
-                <h2 style={{ margin: 0 }}>PAUSADO</h2>
-              </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`, gridTemplateRows: `repeat(${GRID_SIZE}, 1fr)`, gap: '2px', width: '100%', height: '100%' }}>
-                {grid.map((cellValue, index) => {
-                  const r = Math.floor(index / GRID_SIZE);
-                  const c = index % GRID_SIZE;
-                  const isActive = activePiece && activePiece.row === r && activePiece.col === c;
-                  const { isMainLane, isActiveLane } = getCellTrackStatus(r, c);
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Cañón Izquierdo */}
+            <button
+              onClick={() => !activePiece && spawnPiece('LEFT')}
+              disabled={!!activePiece || isPaused || isGameOver || isLevelCleared}
+              title="Disparar desde la izquierda"
+              style={{
+                ...btnCannonStyle,
+                width: '32px',
+                height: '68px',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '12px 4px 4px 12px',
+                borderRight: '2px solid #00f3ff',
+                fontSize: '0.95rem',
+                opacity: activePiece ? 0.4 : 1,
+              }}
+            >
+              ◀
+            </button>
 
-                  let cellColor = cellValue;
-                  if (cellValue === 'CORE') cellColor = CORE_COLOR;
-                  if (isActive) cellColor = activePiece.color;
+            {/* Cuadrícula 7x7 */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 36px)',
+                gridTemplateRows: 'repeat(7, 36px)',
+                gap: '4px',
+                padding: '8px',
+                background: 'rgba(10, 15, 30, 0.8)',
+                backdropFilter: 'blur(14px)',
+                WebkitBackdropFilter: 'blur(14px)',
+                borderRadius: '12px',
+                border: '1px solid rgba(0, 243, 255, 0.35)',
+                boxShadow: '0 0 24px rgba(0, 243, 255, 0.15), inset 0 0 14px rgba(0, 0, 0, 0.8)',
+                position: 'relative',
+              }}
+            >
+              {grid.map((cellColor, idx) => {
+                const r = Math.floor(idx / GRID_SIZE);
+                const c = idx % GRID_SIZE;
+                const isCore = idx === CORE_INDEX;
+                const isPiece = activePiece && activePiece.row === r && activePiece.col === c;
+                const { isMainLane, isActiveLane } = getCellTrackStatus(r, c);
 
-                  let bgTileColor = '#0f172a';
-                  if (isActiveLane) bgTileColor = '#1d4ed8';
-                  else if (isMainLane) bgTileColor = '#1e293b';
+                let bg = 'rgba(15, 23, 42, 0.45)';
+                let border = '1px solid rgba(255, 255, 255, 0.05)';
+                let shadow = 'none';
 
-                  const isCoreBlock = cellValue === 'CORE';
+                if (isCore) {
+                  bg = 'radial-gradient(circle, #00f3ff 20%, #0f172a 85%)';
+                  border = '1px solid #00f3ff';
+                  shadow = '0 0 12px rgba(0, 243, 255, 0.7)';
+                } else if (isPiece) {
+                  bg = activePiece.color;
+                  border = '1px solid #ffffff';
+                  shadow = `0 0 14px ${activePiece.color}`;
+                } else if (cellColor && cellColor !== 'CORE') {
+                  bg = cellColor;
+                  border = '1px solid rgba(255, 255, 255, 0.4)';
+                  shadow = `0 0 8px ${cellColor}88`;
+                } else if (isActiveLane) {
+                  bg = 'rgba(0, 243, 255, 0.18)';
+                  border = '1px dashed rgba(0, 243, 255, 0.45)';
+                } else if (isMainLane) {
+                  bg = 'rgba(255, 255, 255, 0.04)';
+                  border = '1px solid rgba(255, 255, 255, 0.1)';
+                }
 
-                  return (
-                    <div
-                      key={index}
-                      style={{
-                        backgroundColor: cellColor || bgTileColor,
-                        borderRadius: '2px',
-                        border: isCoreBlock ? '2px solid #94a3b8' : 'none',
-                        boxShadow: isActive ? '0 0 8px #fff' : isCoreBlock ? 'inset 0 0 6px #000' : 'none',
-                        transition: 'background-color 0.02s'
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            )}
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: isCore ? '8px' : '5px',
+                      backgroundColor: isPiece ? activePiece.color : cellColor && cellColor !== 'CORE' ? cellColor : undefined,
+                      background: isCore ? bg : undefined,
+                      border,
+                      boxShadow: shadow,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.65rem',
+                      fontWeight: 'bold',
+                      color: '#ffffff',
+                      transition: 'background-color 0.1s ease',
+                    }}
+                  >
+                    {isCore && '✦'}
+                  </div>
+                );
+              })}
+
+              {/* Cartel Flotante: GAME OVER */}
+              {isGameOver && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'rgba(8, 8, 17, 0.88)',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    zIndex: 20,
+                  }}
+                >
+                  <h3 style={{ color: '#ff0055', fontFamily: "'Orbitron', monospace", fontSize: '1.2rem', marginBottom: '8px' }}>
+                    NÚCLEO SATURADO
+                  </h3>
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '14px' }}>
+                    Puntaje final: <b style={{ color: '#00ff66' }}>{score}</b>
+                  </p>
+                  <button onClick={handleReset} style={btnControlStyle}>
+                    REINTENTAR
+                  </button>
+                </div>
+              )}
+
+              {/* Cartel Flotante: NIVEL COMPLETADO */}
+              {isLevelCleared && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'rgba(8, 8, 17, 0.88)',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    zIndex: 20,
+                  }}
+                >
+                  <h3 style={{ color: '#00ff66', fontFamily: "'Orbitron', monospace", fontSize: '1.1rem', marginBottom: '6px' }}>
+                    SECTOR PURGADO
+                  </h3>
+                  <p style={{ color: '#cbd5e1', fontSize: '0.85rem', marginBottom: '14px' }}>
+                    Bono de Nivel: +{500 * level} pts
+                  </p>
+                  <button onClick={handleNextLevel} style={btnControlStyle}>
+                    SIGUIENTE NIVEL ▶
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Cañón Derecho */}
+            <button
+              onClick={() => !activePiece && spawnPiece('RIGHT')}
+              disabled={!!activePiece || isPaused || isGameOver || isLevelCleared}
+              title="Disparar desde la derecha"
+              style={{
+                ...btnCannonStyle,
+                width: '32px',
+                height: '68px',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '4px 12px 12px 4px',
+                borderLeft: '2px solid #00f3ff',
+                fontSize: '0.95rem',
+                opacity: activePiece ? 0.4 : 1,
+              }}
+            >
+              ▶
+            </button>
           </div>
-        </div>
 
-        {/* Panel Ranking */}
-        <div style={{ background: '#1e293b', padding: '12px', borderRadius: '8px', border: '1px solid #3b82f6', width: '160px', textAlign: 'left' }}>
-          <h3 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#f59e0b', textTransform: 'uppercase', textAlign: 'center' }}>🏆 TOP 5 RANKING</h3>
-          <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid #334155', color: '#94a3b8' }}>
-                <th style={{ paddingBottom: '2px' }}>#</th>
-                <th style={{ paddingBottom: '2px' }}>JUG</th>
-                <th style={{ paddingBottom: '2px', textAlign: 'right' }}>PTS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ranking.map((item, idx) => (
-                <tr key={idx} style={{ color: item.name === playerInitials ? '#38bdf8' : '#f8fafc', fontWeight: item.name === playerInitials ? 'bold' : 'normal' }}>
-                  <td style={{ padding: '3px 0' }}>{idx + 1}.</td>
-                  <td>{item.name}</td>
-                  <td style={{ textAlign: 'right', color: '#10b981' }}>{item.score}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button onClick={() => setHasEnteredName(false)} style={{ width: '100%', marginTop: '10px', padding: '5px', fontSize: '0.7rem', backgroundColor: '#334155', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            Cambiar Nombre
+          {/* Cañón Inferior */}
+          <button
+            onClick={() => !activePiece && spawnPiece('BOTTOM')}
+            disabled={!!activePiece || isPaused || isGameOver || isLevelCleared}
+            title="Disparar desde abajo"
+            style={{
+              ...btnCannonStyle,
+              width: '68px',
+              height: '32px',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '4px 4px 12px 12px',
+              borderTop: '2px solid #00f3ff',
+              fontSize: '0.95rem',
+              opacity: activePiece ? 0.4 : 1,
+            }}
+          >
+            ▼
           </button>
         </div>
 
+        {/* Panel Glassmorphic: Ranking TOP 5 */}
+        <div
+          style={{
+            background: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            padding: '14px',
+            borderRadius: '14px',
+            border: '1px solid rgba(0, 243, 255, 0.35)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(0, 243, 255, 0.1)',
+            width: '160px',
+            textAlign: 'left',
+          }}
+        >
+          <h3
+            style={{
+              margin: '0 0 10px 0',
+              fontFamily: "'Orbitron', monospace",
+              fontSize: '0.75rem',
+              color: '#fbbf24',
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              letterSpacing: '1.2px',
+              textShadow: '0 0 10px rgba(251, 191, 36, 0.5)',
+            }}
+          >
+            🏆 TOP 5 PILOTOS
+          </h3>
+          <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse', fontFamily: "'Rajdhani', sans-serif" }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(0, 243, 255, 0.25)', color: 'rgba(255, 255, 255, 0.65)' }}>
+                <th style={{ paddingBottom: '4px', textAlign: 'left' }}>#</th>
+                <th style={{ paddingBottom: '4px', textAlign: 'left' }}>TAG</th>
+                <th style={{ paddingBottom: '4px', textAlign: 'right' }}>PTS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranking.map((item, idx) => {
+                const isCurrent = item.name === playerInitials;
+                return (
+                  <tr
+                    key={idx}
+                    style={{
+                      color: isCurrent ? '#00f3ff' : '#e2e8f0',
+                      fontWeight: isCurrent ? '700' : '500',
+                      textShadow: isCurrent ? '0 0 8px rgba(0, 243, 255, 0.6)' : 'none',
+                    }}
+                  >
+                    <td style={{ padding: '4px 0' }}>{idx + 1}.</td>
+                    <td>{item.name}</td>
+                    <td style={{ textAlign: 'right', color: '#00ff66', fontWeight: '700' }}>{item.score}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', margin: '4px 0 8px 0' }}>
+      {/* Controles de Partida Inferiores */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', margin: '6px 0' }}>
         <button onClick={() => setIsPaused(!isPaused)} disabled={isGameOver || isLevelCleared} style={btnControlStyle}>
           {isPaused ? '▶ Reanudar' : '⏸ Pausar'}
         </button>
-        <button onClick={handleReset} style={{ ...btnControlStyle, backgroundColor: '#dc2626' }}>
+        <button
+          onClick={handleReset}
+          style={{
+            ...btnControlStyle,
+            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.35) 0%, rgba(185, 28, 28, 0.6) 100%)',
+            border: '1px solid rgba(239, 68, 68, 0.7)',
+            boxShadow: '0 0 14px rgba(239, 68, 68, 0.4), inset 0 0 8px rgba(239, 68, 68, 0.25)',
+          }}
+        >
           🔄 Reiniciar
         </button>
       </div>
@@ -527,23 +833,35 @@ export default function Game() {
 }
 
 const btnCannonStyle = {
-  padding: '4px 2px',
-  fontSize: '0.6rem',
-  backgroundColor: '#2563eb',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '4px',
+  fontFamily: "'Orbitron', monospace",
+  padding: '8px 14px',
+  fontSize: '0.85rem',
+  color: '#ffffff',
+  background: 'linear-gradient(135deg, rgba(0, 243, 255, 0.25) 0%, rgba(157, 0, 255, 0.35) 100%)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  border: '1px solid rgba(0, 243, 255, 0.6)',
+  borderRadius: '8px',
   cursor: 'pointer',
-  fontWeight: 'bold'
+  fontWeight: '700',
+  letterSpacing: '1px',
+  textTransform: 'uppercase',
+  boxShadow: '0 0 14px rgba(0, 243, 255, 0.35), inset 0 0 6px rgba(0, 243, 255, 0.2)',
 };
 
 const btnControlStyle = {
-  padding: '6px 16px',
+  fontFamily: "'Orbitron', monospace",
+  padding: '8px 18px',
   fontSize: '0.85rem',
-  backgroundColor: '#2563eb',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '6px',
+  color: '#ffffff',
+  background: 'linear-gradient(135deg, rgba(255, 0, 85, 0.25) 0%, rgba(157, 0, 255, 0.35) 100%)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  border: '1px solid rgba(255, 0, 85, 0.6)',
+  borderRadius: '8px',
   cursor: 'pointer',
-  fontWeight: 'bold'
+  fontWeight: '700',
+  letterSpacing: '1px',
+  textTransform: 'uppercase',
+  boxShadow: '0 0 14px rgba(255, 0, 85, 0.35), inset 0 0 6px rgba(255, 0, 85, 0.2)',
 };

@@ -3,7 +3,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 const GRID_SIZE = 7; // Grilla 7x7 (49 casillas)
 const MID_POINT = Math.floor(GRID_SIZE / 2); // Centro exacto (índice 3)
 const CORE_INDEX = MID_POINT * GRID_SIZE + MID_POINT; // Núcleo estático central 1x1
-const CORE_COLOR = '#475569'; // Metal estático
+
+// Coordenadas de salida de cada cañón
+const CANNON_SPAWNS = {
+  TOP: { row: 0, col: MID_POINT },
+  BOTTOM: { row: GRID_SIZE - 1, col: MID_POINT },
+  LEFT: { row: MID_POINT, col: 0 },
+  RIGHT: { row: MID_POINT, col: GRID_SIZE - 1 },
+};
 
 // Paleta de 5 colores neón
 const COLOR_PALETTE = [
@@ -13,6 +20,12 @@ const COLOR_PALETTE = [
   '#f59e0b', // Amarillo
   '#a855f7', // Violeta
 ];
+
+// Verifica si la celda de entrada de un cañón está ocupada
+function isCannonBlocked(dir, board) {
+  const { row, col } = CANNON_SPAWNS[dir];
+  return board[row * GRID_SIZE + col] !== null;
+}
 
 // Algoritmo de detección de grupos contiguos (Líneas, formas en L o esquinas)
 function findConnectedMatches(board) {
@@ -65,13 +78,16 @@ function findConnectedMatches(board) {
 export default function Game() {
   const [playerInitials, setPlayerInitials] = useState('BEN');
   const [hasEnteredName, setHasEnteredName] = useState(false);
+
   const [ranking, setRanking] = useState(() => {
     const saved = localStorage.getItem('tetracore_ranking');
-    return saved ? JSON.parse(saved) : [
-      { name: 'CPU', score: 1200, level: 3 },
-      { name: 'PRO', score: 700, level: 2 },
-      { name: 'ACE', score: 300, level: 1 }
-    ];
+    return saved
+      ? JSON.parse(saved)
+      : [
+          { name: 'CPU', score: 1200, level: 3 },
+          { name: 'PRO', score: 700, level: 2 },
+          { name: 'ACE', score: 300, level: 1 },
+        ];
   });
 
   const [score, setScore] = useState(0);
@@ -118,49 +134,86 @@ export default function Game() {
   const isLevelClearedRef = useRef(isLevelCleared);
   isLevelClearedRef.current = isLevelCleared;
 
-  const getRandomColor = () => COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
+  const getRandomColor = () =>
+    COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
 
-  const saveToRanking = useCallback((finalScore, finalLevel) => {
-    if (finalScore <= 0) return;
-    setRanking((prev) => {
-      const updated = [...prev, { name: playerInitials, score: finalScore, level: finalLevel }]
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 5);
-      localStorage.setItem('tetracore_ranking', JSON.stringify(updated));
-      return updated;
-    });
-  }, [playerInitials]);
+  const saveToRanking = useCallback(
+    (finalScore, finalLevel) => {
+      if (finalScore <= 0) return;
+      setRanking((prev) => {
+        const updated = [
+          ...prev,
+          { name: playerInitials, score: finalScore, level: finalLevel },
+        ]
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 5);
+        localStorage.setItem('tetracore_ranking', JSON.stringify(updated));
+        return updated;
+      });
+    },
+    [playerInitials]
+  );
 
-  const spawnPiece = useCallback((forcedDir = null) => {
-    if (isPausedRef.current || isGameOverRef.current || isLevelClearedRef.current || !hasEnteredName) return;
+  const spawnPiece = useCallback(
+    (forcedDir = null) => {
+      if (
+        isPausedRef.current ||
+        isGameOverRef.current ||
+        isLevelClearedRef.current ||
+        !hasEnteredName
+      )
+        return;
 
-    const directions = ['TOP', 'BOTTOM', 'LEFT', 'RIGHT'];
-    const dir = forcedDir || directions[Math.floor(Math.random() * directions.length)];
+      const directions = ['TOP', 'BOTTOM', 'LEFT', 'RIGHT'];
+      const availableDirs = directions.filter(
+        (d) => !isCannonBlocked(d, gridRef.current)
+      );
 
-    let row = 0, col = 0;
-    if (dir === 'TOP') { row = 0; col = MID_POINT; }
-    if (dir === 'BOTTOM') { row = GRID_SIZE - 1; col = MID_POINT; }
-    if (dir === 'LEFT') { row = MID_POINT; col = 0; }
-    if (dir === 'RIGHT') { row = MID_POINT; col = GRID_SIZE - 1; }
+      // Game Over únicamente si los 4 cañones están saturados al mismo tiempo
+      if (availableDirs.length === 0) {
+        isGameOverRef.current = true;
+        setIsGameOver(true);
+        return;
+      }
 
-    if (gridRef.current[row * GRID_SIZE + col] !== null && gridRef.current[row * GRID_SIZE + col] !== 'CORE') {
-      isGameOverRef.current = true;
-      setIsGameOver(true);
-      return;
-    }
+      // Si el usuario hace clic manual en un cañón bloqueado, no dispara
+      if (forcedDir && isCannonBlocked(forcedDir, gridRef.current)) {
+        return;
+      }
 
-    const color = nextColor;
-    setNextColor(getRandomColor());
-    const newPiece = { row, col, color, dir };
-    activePieceRef.current = newPiece;
-    setActivePiece(newPiece);
-  }, [hasEnteredName, nextColor]);
+      const dir =
+        forcedDir ||
+        availableDirs[Math.floor(Math.random() * availableDirs.length)];
+
+      const { row, col } = CANNON_SPAWNS[dir];
+      const color = nextColor;
+      setNextColor(getRandomColor());
+
+      const newPiece = { row, col, color, dir };
+      activePieceRef.current = newPiece;
+      setActivePiece(newPiece);
+    },
+    [hasEnteredName, nextColor]
+  );
 
   useEffect(() => {
-    if (!activePiece && !isGameOver && !isPaused && !isLevelCleared && hasEnteredName) {
+    if (
+      !activePiece &&
+      !isGameOver &&
+      !isPaused &&
+      !isLevelCleared &&
+      hasEnteredName
+    ) {
       spawnPiece();
     }
-  }, [activePiece, isGameOver, isPaused, isLevelCleared, hasEnteredName, spawnPiece]);
+  }, [
+    activePiece,
+    isGameOver,
+    isPaused,
+    isLevelCleared,
+    hasEnteredName,
+    spawnPiece,
+  ]);
 
   useEffect(() => {
     if (isGameOver) {
@@ -185,7 +238,6 @@ export default function Game() {
       matchedIndices.forEach((idx) => {
         currentGrid[idx] = null;
       });
-
       newScore += matchedIndices.size * 100;
       newCombos += Math.max(1, triosFound);
 
@@ -195,6 +247,13 @@ export default function Game() {
         newScore += 500 * levelRef.current;
       }
     }
+
+    // Verificar si los 4 cañones quedaron saturados tras fijar el bloque
+    const allCannonsBlocked =
+      !didLevelUp &&
+      ['TOP', 'BOTTOM', 'LEFT', 'RIGHT'].every((d) =>
+        isCannonBlocked(d, currentGrid)
+      );
 
     // Actualización síncrona de referencias
     gridRef.current = currentGrid;
@@ -211,13 +270,22 @@ export default function Game() {
     if (didLevelUp) {
       isLevelClearedRef.current = true;
       setIsLevelCleared(true);
+    } else if (allCannonsBlocked) {
+      isGameOverRef.current = true;
+      setIsGameOver(true);
     }
   }, []);
 
   // Avance del bloque hacia el centro
   const stepForward = useCallback(() => {
     const piece = activePieceRef.current;
-    if (!piece || isPausedRef.current || isGameOverRef.current || isLevelClearedRef.current) return;
+    if (
+      !piece ||
+      isPausedRef.current ||
+      isGameOverRef.current ||
+      isLevelClearedRef.current
+    )
+      return;
 
     let { row, col, dir } = piece;
     let nextRow = row;
@@ -228,8 +296,13 @@ export default function Game() {
     if (dir === 'LEFT') nextCol++;
     if (dir === 'RIGHT') nextCol--;
 
-    const isOutOfBounds = nextRow < 0 || nextRow >= GRID_SIZE || nextCol < 0 || nextCol >= GRID_SIZE;
-    const isOccupied = !isOutOfBounds && gridRef.current[nextRow * GRID_SIZE + nextCol] !== null;
+    const isOutOfBounds =
+      nextRow < 0 ||
+      nextRow >= GRID_SIZE ||
+      nextCol < 0 ||
+      nextCol >= GRID_SIZE;
+    const isOccupied =
+      !isOutOfBounds && gridRef.current[nextRow * GRID_SIZE + nextCol] !== null;
 
     if (isOutOfBounds || isOccupied) {
       lockPiece(piece);
@@ -260,7 +333,13 @@ export default function Game() {
       }
 
       const piece = activePieceRef.current;
-      if (!piece || isPausedRef.current || isGameOverRef.current || isLevelClearedRef.current) return;
+      if (
+        !piece ||
+        isPausedRef.current ||
+        isGameOverRef.current ||
+        isLevelClearedRef.current
+      )
+        return;
 
       const { row, col, dir } = piece;
       let newRow = row;
@@ -273,7 +352,8 @@ export default function Game() {
         if (dir === 'RIGHT') shouldStep = true;
       }
       if (e.key === 'ArrowRight') {
-        if (dir === 'TOP' || dir === 'BOTTOM') newCol = Math.min(GRID_SIZE - 1, col + 1);
+        if (dir === 'TOP' || dir === 'BOTTOM')
+          newCol = Math.min(GRID_SIZE - 1, col + 1);
         if (dir === 'LEFT') shouldStep = true;
       }
       if (e.key === 'ArrowUp') {
@@ -281,12 +361,13 @@ export default function Game() {
         if (dir === 'BOTTOM') shouldStep = true;
       }
       if (e.key === 'ArrowDown') {
-        if (dir === 'LEFT' || dir === 'RIGHT') newRow = Math.min(GRID_SIZE - 1, row + 1);
+        if (dir === 'LEFT' || dir === 'RIGHT')
+          newRow = Math.min(GRID_SIZE - 1, row + 1);
         if (dir === 'TOP') shouldStep = true;
       }
 
       if (shouldStep) {
-        stepForward(); // Acelera hacia el frente
+        stepForward();
       } else if (newRow !== row || newCol !== col) {
         const targetIdx = newRow * GRID_SIZE + newCol;
         if (gridRef.current[targetIdx] === null) {
@@ -304,8 +385,8 @@ export default function Game() {
   const handleNextLevel = () => {
     const fresh = Array(GRID_SIZE * GRID_SIZE).fill(null);
     fresh[CORE_INDEX] = 'CORE';
-
     const nextLvl = level + 1;
+
     gridRef.current = fresh;
     combosRef.current = 0;
     levelRef.current = nextLvl;
@@ -350,21 +431,93 @@ export default function Game() {
   };
 
   const getCellTrackStatus = (r, c) => {
-    const isMainLane = (c === MID_POINT && r !== MID_POINT) || (r === MID_POINT && c !== MID_POINT);
-
+    const isMainLane =
+      (c === MID_POINT && r !== MID_POINT) ||
+      (r === MID_POINT && c !== MID_POINT);
     let isActiveLane = false;
+
     if (activePiece) {
       const { row, col, dir } = activePiece;
-      if (dir === 'TOP' && c === col && r >= 0 && r < MID_POINT) isActiveLane = true;
-      if (dir === 'BOTTOM' && c === col && r > MID_POINT && r < GRID_SIZE) isActiveLane = true;
-      if (dir === 'LEFT' && r === row && c >= 0 && c < MID_POINT) isActiveLane = true;
-      if (dir === 'RIGHT' && r === row && c > MID_POINT && c < GRID_SIZE) isActiveLane = true;
+      if (dir === 'TOP' && c === col && r >= 0 && r < MID_POINT)
+        isActiveLane = true;
+      if (dir === 'BOTTOM' && c === col && r > MID_POINT && r < GRID_SIZE)
+        isActiveLane = true;
+      if (dir === 'LEFT' && r === row && c >= 0 && c < MID_POINT)
+        isActiveLane = true;
+      if (dir === 'RIGHT' && r === row && c > MID_POINT && c < GRID_SIZE)
+        isActiveLane = true;
     }
 
     return { isMainLane, isActiveLane };
   };
 
-if (!hasEnteredName) {
+  // Estado individual de saturación de cada cañón
+  const topBlocked = isCannonBlocked('TOP', grid);
+  const bottomBlocked = isCannonBlocked('BOTTOM', grid);
+  const leftBlocked = isCannonBlocked('LEFT', grid);
+  const rightBlocked = isCannonBlocked('RIGHT', grid);
+
+  // Estilo dinámico: apaga el neón cuando el cañón está saturado
+  const getCannonStyle = (dir, isBlocked) => {
+    const dimensions =
+      dir === 'TOP' || dir === 'BOTTOM'
+        ? { width: '68px', height: '32px' }
+        : { width: '32px', height: '68px' };
+
+    const shapeByDir = {
+      TOP: {
+        borderRadius: '12px 12px 4px 4px',
+        borderBottom: isBlocked ? '2px solid #334155' : '2px solid #00f3ff',
+      },
+      BOTTOM: {
+        borderRadius: '4px 4px 12px 12px',
+        borderTop: isBlocked ? '2px solid #334155' : '2px solid #00f3ff',
+      },
+      LEFT: {
+        borderRadius: '12px 4px 4px 12px',
+        borderRight: isBlocked ? '2px solid #334155' : '2px solid #00f3ff',
+      },
+      RIGHT: {
+        borderRadius: '4px 12px 12px 4px',
+        borderLeft: isBlocked ? '2px solid #334155' : '2px solid #00f3ff',
+      },
+    };
+
+    if (isBlocked) {
+      return {
+        ...btnCannonStyle,
+        ...dimensions,
+        padding: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '0.95rem',
+        background: 'rgba(15, 23, 42, 0.35)',
+        border: '1px solid rgba(71, 85, 105, 0.35)',
+        ...shapeByDir[dir],
+        boxShadow: 'none',
+        textShadow: 'none',
+        color: '#475569',
+        opacity: 0.4,
+        cursor: 'not-allowed',
+      };
+    }
+
+    return {
+      ...btnCannonStyle,
+      ...dimensions,
+      padding: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '0.95rem',
+      ...shapeByDir[dir],
+      textShadow: '0 0 8px rgba(0, 243, 255, 0.85)',
+      opacity: activePiece ? 0.65 : 1,
+    };
+  };
+
+  if (!hasEnteredName) {
     return (
       <div
         style={{
@@ -400,7 +553,7 @@ if (!hasEnteredName) {
             marginBottom: '24px',
           }}
         >
-          IDENTIFICACIÓN DE PILOTO PARA EL RANKING ARCADE
+          IDENTIFICACIÓN DE PLAYER PARA EL RANKING ARCADE
         </p>
 
         <form
@@ -412,7 +565,8 @@ if (!hasEnteredName) {
             padding: '28px 24px',
             borderRadius: '16px',
             border: '1px solid rgba(0, 243, 255, 0.4)',
-            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.65), inset 0 0 14px rgba(0, 243, 255, 0.1)',
+            boxShadow:
+              '0 12px 36px rgba(0, 0, 0, 0.65), inset 0 0 14px rgba(0, 243, 255, 0.1)',
             display: 'flex',
             flexDirection: 'column',
             gap: '16px',
@@ -432,8 +586,8 @@ if (!hasEnteredName) {
           </label>
           <input
             type="text"
-            maxLength={3}
             value={playerInitials}
+            maxLength={3}
             onChange={(e) => setPlayerInitials(e.target.value.toUpperCase())}
             style={{
               fontFamily: "'Orbitron', monospace",
@@ -460,7 +614,7 @@ if (!hasEnteredName) {
               marginTop: '4px',
             }}
           >
-            INICIAR MISIÓN ▶
+            INICIAR MISIÓN ►
           </button>
         </form>
       </div>
@@ -470,9 +624,10 @@ if (!hasEnteredName) {
   return (
     <div
       style={{
-        padding: '6px 12px',
+        padding: '6px 16px',
         textAlign: 'center',
         color: '#fff',
+        width: '100%',
         minHeight: 'calc(100vh - 110px)',
         boxSizing: 'border-box',
         display: 'flex',
@@ -493,7 +648,10 @@ if (!hasEnteredName) {
             textShadow: '0 0 10px rgba(0, 243, 255, 0.6)',
           }}
         >
-          TETRACORE <span style={{ color: '#ff0055', fontSize: '0.9rem' }}>// ARENA 7x7</span>
+          TETRACORE{' '}
+          <span style={{ color: '#ff0055', fontSize: '0.9rem' }}>
+            // ARENA 7x7
+          </span>
         </h2>
 
         <div
@@ -511,65 +669,99 @@ if (!hasEnteredName) {
             border: '1px solid rgba(0, 243, 255, 0.25)',
           }}
         >
-          <span>PILOTO: <b style={{ color: '#00f3ff', fontFamily: "'Orbitron', monospace" }}>{playerInitials}</b></span>
+          <span>
+            PLAYER:{' '}
+            <b style={{ color: '#00f3ff', fontFamily: "'Orbitron', monospace" }}>
+              {playerInitials}
+            </b>
+          </span>
           <span>|</span>
-          <span>SCORE: <b style={{ color: '#00ff66', fontFamily: "'Orbitron', monospace" }}>{score}</b></span>
+          <span>
+            SCORE:{' '}
+            <b style={{ color: '#00ff66', fontFamily: "'Orbitron', monospace" }}>
+              {score}
+            </b>
+          </span>
           <span>|</span>
-          <span>NIVEL: <b style={{ color: '#fbbf24', fontFamily: "'Orbitron', monospace" }}>{level}</b></span>
+          <span>
+            NIVEL:{' '}
+            <b style={{ color: '#fbbf24', fontFamily: "'Orbitron', monospace" }}>
+              {level}
+            </b>
+          </span>
           <span>|</span>
-          <span>OBJETIVO: <b style={{ color: '#ec4899', fontFamily: "'Orbitron', monospace" }}>{combosInLevel}/{targetCombos} TRÍOS</b></span>
+          <span>
+            OBJETIVO:{' '}
+            <b style={{ color: '#ec4899', fontFamily: "'Orbitron', monospace" }}>
+              {combosInLevel}/{targetCombos} TRÍOS
+            </b>
+          </span>
         </div>
       </div>
 
-      {/* Área Central: Tablero + Cañones a la izquierda | Ranking TOP 5 a la derecha */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', alignItems: 'center', position: 'relative' }}>
-        
-        {/* Arena de Juego con los 4 Cañones Retro Simétricos */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', position: 'relative' }}>
-          
-          {/* Cañón Superior */}
+      {/* Grilla 3 columnas: Tablero 100% centrado en el medio | Ranking al costado derecho */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
+          alignItems: 'center',
+          width: '100%',
+          maxWidth: '1240px',
+          margin: '0 auto',
+        }}
+      >
+        {/* Columna izquierda vacía para equilibrar el centrado del tablero */}
+        <div />
+
+        {/* Columna central: Arena de Juego + 4 Cañones apuntando al centro */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            position: 'relative',
+          }}
+        >
+          {/* Cañón Superior (apunta abajo hacia el centro) */}
           <button
-            onClick={() => !activePiece && spawnPiece('TOP')}
-            disabled={!!activePiece || isPaused || isGameOver || isLevelCleared}
-            title="Disparar desde arriba"
-            style={{
-              ...btnCannonStyle,
-              width: '68px',
-              height: '32px',
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '12px 12px 4px 4px',
-              borderBottom: '2px solid #00f3ff',
-              fontSize: '0.95rem',
-              opacity: activePiece ? 0.4 : 1,
-            }}
+            onClick={() => !activePiece && !topBlocked && spawnPiece('TOP')}
+            disabled={
+              !!activePiece ||
+              topBlocked ||
+              isPaused ||
+              isGameOver ||
+              isLevelCleared
+            }
+            title={
+              topBlocked ? 'Cañón superior saturado' : 'Disparar desde arriba'
+            }
+            style={getCannonStyle('TOP', topBlocked)}
           >
-            ▲
+            ▼
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* Cañón Izquierdo */}
+            {/* Cañón Izquierdo (apunta a la derecha hacia el centro) */}
             <button
-              onClick={() => !activePiece && spawnPiece('LEFT')}
-              disabled={!!activePiece || isPaused || isGameOver || isLevelCleared}
-              title="Disparar desde la izquierda"
-              style={{
-                ...btnCannonStyle,
-                width: '32px',
-                height: '68px',
-                padding: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '12px 4px 4px 12px',
-                borderRight: '2px solid #00f3ff',
-                fontSize: '0.95rem',
-                opacity: activePiece ? 0.4 : 1,
-              }}
+              onClick={() =>
+                !activePiece && !leftBlocked && spawnPiece('LEFT')
+              }
+              disabled={
+                !!activePiece ||
+                leftBlocked ||
+                isPaused ||
+                isGameOver ||
+                isLevelCleared
+              }
+              title={
+                leftBlocked
+                  ? 'Cañón izquierdo saturado'
+                  : 'Disparar desde la izquierda'
+              }
+              style={getCannonStyle('LEFT', leftBlocked)}
             >
-              ◀
+              ▶
             </button>
 
             {/* Cuadrícula 7x7 */}
@@ -579,13 +771,14 @@ if (!hasEnteredName) {
                 gridTemplateColumns: 'repeat(7, 36px)',
                 gridTemplateRows: 'repeat(7, 36px)',
                 gap: '4px',
-                padding: '8px',
+                padding: '18px',
                 background: 'rgba(10, 15, 30, 0.8)',
                 backdropFilter: 'blur(14px)',
                 WebkitBackdropFilter: 'blur(14px)',
                 borderRadius: '12px',
                 border: '1px solid rgba(0, 243, 255, 0.35)',
-                boxShadow: '0 0 24px rgba(0, 243, 255, 0.15), inset 0 0 14px rgba(0, 0, 0, 0.8)',
+                boxShadow:
+                  '0 0 24px rgba(0, 243, 255, 0.15), inset 0 0 14px rgba(0, 0, 0, 0.8)',
                 position: 'relative',
               }}
             >
@@ -593,7 +786,10 @@ if (!hasEnteredName) {
                 const r = Math.floor(idx / GRID_SIZE);
                 const c = idx % GRID_SIZE;
                 const isCore = idx === CORE_INDEX;
-                const isPiece = activePiece && activePiece.row === r && activePiece.col === c;
+                const isPiece =
+                  activePiece &&
+                  activePiece.row === r &&
+                  activePiece.col === c;
                 const { isMainLane, isActiveLane } = getCellTrackStatus(r, c);
 
                 let bg = 'rgba(15, 23, 42, 0.45)';
@@ -627,7 +823,11 @@ if (!hasEnteredName) {
                       width: '36px',
                       height: '36px',
                       borderRadius: isCore ? '8px' : '5px',
-                      backgroundColor: isPiece ? activePiece.color : cellColor && cellColor !== 'CORE' ? cellColor : undefined,
+                      backgroundColor: isPiece
+                        ? activePiece.color
+                        : cellColor && cellColor !== 'CORE'
+                        ? cellColor
+                        : undefined,
                       background: isCore ? bg : undefined,
                       border,
                       boxShadow: shadow,
@@ -639,9 +839,7 @@ if (!hasEnteredName) {
                       color: '#ffffff',
                       transition: 'background-color 0.1s ease',
                     }}
-                  >
-                    {isCore && '✦'}
-                  </div>
+                  />
                 );
               })}
 
@@ -662,10 +860,23 @@ if (!hasEnteredName) {
                     zIndex: 20,
                   }}
                 >
-                  <h3 style={{ color: '#ff0055', fontFamily: "'Orbitron', monospace", fontSize: '1.2rem', marginBottom: '8px' }}>
+                  <h3
+                    style={{
+                      color: '#ff0055',
+                      fontFamily: "'Orbitron', monospace",
+                      fontSize: '1.2rem',
+                      marginBottom: '8px',
+                    }}
+                  >
                     NÚCLEO SATURADO
                   </h3>
-                  <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '14px' }}>
+                  <p
+                    style={{
+                      color: '#94a3b8',
+                      fontSize: '0.9rem',
+                      marginBottom: '14px',
+                    }}
+                  >
                     Puntaje final: <b style={{ color: '#00ff66' }}>{score}</b>
                   </p>
                   <button onClick={handleReset} style={btnControlStyle}>
@@ -691,143 +902,196 @@ if (!hasEnteredName) {
                     zIndex: 20,
                   }}
                 >
-                  <h3 style={{ color: '#00ff66', fontFamily: "'Orbitron', monospace", fontSize: '1.1rem', marginBottom: '6px' }}>
+                  <h3
+                    style={{
+                      color: '#00ff66',
+                      fontFamily: "'Orbitron', monospace",
+                      fontSize: '1.1rem',
+                      marginBottom: '6px',
+                    }}
+                  >
                     SECTOR PURGADO
                   </h3>
-                  <p style={{ color: '#cbd5e1', fontSize: '0.85rem', marginBottom: '14px' }}>
+                  <p
+                    style={{
+                      color: '#cbd5e1',
+                      fontSize: '0.85rem',
+                      marginBottom: '14px',
+                    }}
+                  >
                     Bono de Nivel: +{500 * level} pts
                   </p>
                   <button onClick={handleNextLevel} style={btnControlStyle}>
-                    SIGUIENTE NIVEL ▶
+                    SIGUIENTE NIVEL ►
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Cañón Derecho */}
+            {/* Cañón Derecho (apunta a la izquierda hacia el centro) */}
             <button
-              onClick={() => !activePiece && spawnPiece('RIGHT')}
-              disabled={!!activePiece || isPaused || isGameOver || isLevelCleared}
-              title="Disparar desde la derecha"
-              style={{
-                ...btnCannonStyle,
-                width: '32px',
-                height: '68px',
-                padding: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '4px 12px 12px 4px',
-                borderLeft: '2px solid #00f3ff',
-                fontSize: '0.95rem',
-                opacity: activePiece ? 0.4 : 1,
-              }}
+              onClick={() =>
+                !activePiece && !rightBlocked && spawnPiece('RIGHT')
+              }
+              disabled={
+                !!activePiece ||
+                rightBlocked ||
+                isPaused ||
+                isGameOver ||
+                isLevelCleared
+              }
+              title={
+                rightBlocked
+                  ? 'Cañón derecho saturado'
+                  : 'Disparar desde la derecha'
+              }
+              style={getCannonStyle('RIGHT', rightBlocked)}
             >
-              ▶
+              ◀
             </button>
           </div>
 
-          {/* Cañón Inferior */}
+          {/* Cañón Inferior (apunta arriba hacia el centro) */}
           <button
-            onClick={() => !activePiece && spawnPiece('BOTTOM')}
-            disabled={!!activePiece || isPaused || isGameOver || isLevelCleared}
-            title="Disparar desde abajo"
-            style={{
-              ...btnCannonStyle,
-              width: '68px',
-              height: '32px',
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '4px 4px 12px 12px',
-              borderTop: '2px solid #00f3ff',
-              fontSize: '0.95rem',
-              opacity: activePiece ? 0.4 : 1,
-            }}
+            onClick={() =>
+              !activePiece && !bottomBlocked && spawnPiece('BOTTOM')
+            }
+            disabled={
+              !!activePiece ||
+              bottomBlocked ||
+              isPaused ||
+              isGameOver ||
+              isLevelCleared
+            }
+            title={
+              bottomBlocked
+                ? 'Cañón inferior saturado'
+                : 'Disparar desde abajo'
+            }
+            style={getCannonStyle('BOTTOM', bottomBlocked)}
           >
-            ▼
+            ▲
           </button>
         </div>
 
-        {/* Panel Glassmorphic: Ranking TOP 5 */}
-        <div
-          style={{
-            background: 'rgba(15, 23, 42, 0.7)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            padding: '14px',
-            borderRadius: '14px',
-            border: '1px solid rgba(0, 243, 255, 0.35)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(0, 243, 255, 0.1)',
-            width: '160px',
-            textAlign: 'left',
-          }}
-        >
-          <h3
+        {/* Columna derecha: Ranking TOP 5 al costado derecho */}
+        <div style={{ justifySelf: 'start', paddingLeft: '36px' }}>
+          <div
             style={{
-              margin: '0 0 10px 0',
-              fontFamily: "'Orbitron', monospace",
-              fontSize: '0.75rem',
-              color: '#fbbf24',
-              textTransform: 'uppercase',
-              textAlign: 'center',
-              letterSpacing: '1.2px',
-              textShadow: '0 0 10px rgba(251, 191, 36, 0.5)',
+              background: 'rgba(15, 23, 42, 0.7)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              padding: '16px',
+              borderRadius: '14px',
+              border: '1px solid rgba(0, 243, 255, 0.35)',
+              boxShadow:
+                '0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(0, 243, 255, 0.1)',
+              width: '175px',
+              textAlign: 'left',
             }}
           >
-            🏆 TOP 5 PILOTOS
-          </h3>
-          <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse', fontFamily: "'Rajdhani', sans-serif" }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(0, 243, 255, 0.25)', color: 'rgba(255, 255, 255, 0.65)' }}>
-                <th style={{ paddingBottom: '4px', textAlign: 'left' }}>#</th>
-                <th style={{ paddingBottom: '4px', textAlign: 'left' }}>TAG</th>
-                <th style={{ paddingBottom: '4px', textAlign: 'right' }}>PTS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ranking.map((item, idx) => {
-                const isCurrent = item.name === playerInitials;
-                return (
-                  <tr
-                    key={idx}
-                    style={{
-                      color: isCurrent ? '#00f3ff' : '#e2e8f0',
-                      fontWeight: isCurrent ? '700' : '500',
-                      textShadow: isCurrent ? '0 0 8px rgba(0, 243, 255, 0.6)' : 'none',
-                    }}
-                  >
-                    <td style={{ padding: '4px 0' }}>{idx + 1}.</td>
-                    <td>{item.name}</td>
-                    <td style={{ textAlign: 'right', color: '#00ff66', fontWeight: '700' }}>{item.score}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+            <h3
+              style={{
+                margin: '0 0 10px 0',
+                fontFamily: "'Orbitron', monospace",
+                fontSize: '0.75rem',
+                color: '#fbbf24',
+                textTransform: 'uppercase',
+                textAlign: 'center',
+                letterSpacing: '1.2px',
+                textShadow: '0 0 10px rgba(251, 191, 36, 0.5)',
+              }}
+            >
+              TOP 5 PLAYERS
+            </h3>
+            <table
+              style={{
+                width: '100%',
+                fontSize: '0.85rem',
+                borderCollapse: 'collapse',
+                fontFamily: "'Rajdhani', sans-serif",
+              }}
+            >
+              <thead>
+                <tr
+                  style={{
+                    borderBottom: '1px solid rgba(0, 243, 255, 0.25)',
+                    color: 'rgba(255, 255, 255, 0.65)',
+                  }}
+                >
+                  <th style={{ paddingBottom: '4px', textAlign: 'left' }}>#</th>
+                  <th style={{ paddingBottom: '4px', textAlign: 'left' }}>
+                    TAG
+                  </th>
+                  <th style={{ paddingBottom: '4px', textAlign: 'right' }}>
+                    PTS
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {ranking.map((item, idx) => {
+                  const isCurrent = item.name === playerInitials;
+                  return (
+                    <tr
+                      key={idx}
+                      style={{
+                        color: isCurrent ? '#00f3ff' : '#e2e8f0',
+                        fontWeight: isCurrent ? '700' : '500',
+                        textShadow: isCurrent
+                          ? '0 0 8px rgba(0, 243, 255, 0.6)'
+                          : 'none',
+                      }}
+                    >
+                      <td style={{ padding: '4px 0' }}>{idx + 1}.</td>
+                      <td>{item.name}</td>
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color: '#00ff66',
+                          fontWeight: '700',
+                        }}
+                      >
+                        {item.score}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-
       </div>
 
       {/* Controles de Partida Inferiores */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', margin: '6px 0' }}>
-        <button onClick={() => setIsPaused(!isPaused)} disabled={isGameOver || isLevelCleared} style={btnControlStyle}>
-          {isPaused ? '▶ Reanudar' : '⏸ Pausar'}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '14px',
+          margin: '6px 0',
+        }}
+      >
+        <button
+          onClick={() => setIsPaused(!isPaused)}
+          disabled={isGameOver || isLevelCleared}
+          style={btnControlStyle}
+        >
+          {isPaused ? '► Reanudar' : 'II Pausar'}
         </button>
         <button
           onClick={handleReset}
           style={{
             ...btnControlStyle,
-            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.35) 0%, rgba(185, 28, 28, 0.6) 100%)',
+            background:
+              'linear-gradient(135deg, rgba(239, 68, 68, 0.35) 0%, rgba(185, 28, 28, 0.6) 100%)',
             border: '1px solid rgba(239, 68, 68, 0.7)',
-            boxShadow: '0 0 14px rgba(239, 68, 68, 0.4), inset 0 0 8px rgba(239, 68, 68, 0.25)',
+            boxShadow:
+              '0 0 14px rgba(239, 68, 68, 0.4), inset 0 0 8px rgba(239, 68, 68, 0.25)',
           }}
         >
-          🔄 Reiniciar
+          Reiniciar
         </button>
       </div>
-
     </div>
   );
 }
@@ -837,7 +1101,8 @@ const btnCannonStyle = {
   padding: '8px 14px',
   fontSize: '0.85rem',
   color: '#ffffff',
-  background: 'linear-gradient(135deg, rgba(0, 243, 255, 0.25) 0%, rgba(157, 0, 255, 0.35) 100%)',
+  background:
+    'linear-gradient(135deg, rgba(0, 243, 255, 0.25) 0%, rgba(157, 0, 255, 0.35) 100%)',
   backdropFilter: 'blur(8px)',
   WebkitBackdropFilter: 'blur(8px)',
   border: '1px solid rgba(0, 243, 255, 0.6)',
@@ -846,7 +1111,8 @@ const btnCannonStyle = {
   fontWeight: '700',
   letterSpacing: '1px',
   textTransform: 'uppercase',
-  boxShadow: '0 0 14px rgba(0, 243, 255, 0.35), inset 0 0 6px rgba(0, 243, 255, 0.2)',
+  boxShadow:
+    '0 0 14px rgba(0, 243, 255, 0.35), inset 0 0 6px rgba(0, 243, 255, 0.2)',
 };
 
 const btnControlStyle = {
@@ -854,7 +1120,8 @@ const btnControlStyle = {
   padding: '8px 18px',
   fontSize: '0.85rem',
   color: '#ffffff',
-  background: 'linear-gradient(135deg, rgba(255, 0, 85, 0.25) 0%, rgba(157, 0, 255, 0.35) 100%)',
+  background:
+    'linear-gradient(135deg, rgba(255, 0, 85, 0.25) 0%, rgba(157, 0, 255, 0.35) 100%)',
   backdropFilter: 'blur(8px)',
   WebkitBackdropFilter: 'blur(8px)',
   border: '1px solid rgba(255, 0, 85, 0.6)',
@@ -863,5 +1130,6 @@ const btnControlStyle = {
   fontWeight: '700',
   letterSpacing: '1px',
   textTransform: 'uppercase',
-  boxShadow: '0 0 14px rgba(255, 0, 85, 0.35), inset 0 0 6px rgba(255, 0, 85, 0.2)',
+  boxShadow:
+    '0 0 14px rgba(255, 0, 85, 0.35), inset 0 0 6px rgba(255, 0, 85, 0.2)',
 };

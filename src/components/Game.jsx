@@ -21,6 +21,14 @@ const COLOR_PALETTE = [
   '#a855f7', // Violeta
 ];
 
+const COLOR_NAMES = {
+  '#ef4444': 'ROJO',
+  '#3b82f6': 'AZUL',
+  '#10b981': 'VERDE',
+  '#f59e0b': 'AMARILLO',
+  '#a855f7': 'VIOLETA',
+};
+
 // Verifica si la celda de entrada de un cañón está ocupada
 function isCannonBlocked(dir, board) {
   const { row, col } = CANNON_SPAWNS[dir];
@@ -710,8 +718,75 @@ export default function Game() {
           margin: '0 auto',
         }}
       >
-        {/* Columna izquierda vacía para equilibrar el centrado del tablero */}
-        <div />
+        {/* Columna izquierda: Vista previa del siguiente bloque */}
+        <div style={{ justifySelf: 'end', paddingRight: '36px' }}>
+          <div
+            style={{
+              background: 'rgba(15, 23, 42, 0.7)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              padding: '16px',
+              borderRadius: '14px',
+              border: '1px solid rgba(0, 243, 255, 0.35)',
+              boxShadow:
+                '0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(0, 243, 255, 0.1)',
+              width: '175px',
+              textAlign: 'center',
+            }}
+          >
+            <h3
+              style={{
+                margin: '0 0 12px 0',
+                fontFamily: "'Orbitron', monospace",
+                fontSize: '0.75rem',
+                color: '#00f3ff',
+                textTransform: 'uppercase',
+                letterSpacing: '1.2px',
+                textShadow: '0 0 10px rgba(0, 243, 255, 0.5)',
+              }}
+            >
+              SIGUIENTE BLOQUE
+            </h3>
+
+            <div
+              style={{
+                background: 'rgba(8, 8, 17, 0.75)',
+                borderRadius: '10px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                padding: '18px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+              }}
+            >
+              <div
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '8px',
+                  backgroundColor: nextColor,
+                  border: '2px solid #ffffff',
+                  boxShadow: `0 0 18px ${nextColor}, inset 0 0 8px rgba(255, 255, 255, 0.35)`,
+                  transition: 'all 0.2s ease',
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: "'Orbitron', monospace",
+                  fontSize: '0.7rem',
+                  fontWeight: '700',
+                  letterSpacing: '1.5px',
+                  color: nextColor,
+                  textShadow: `0 0 8px ${nextColor}88`,
+                }}
+              >
+                {COLOR_NAMES[nextColor]}
+              </span>
+            </div>
+          </div>
+        </div>
 
         {/* Columna central: Arena de Juego + 4 Cañones apuntando al centro */}
         <div
